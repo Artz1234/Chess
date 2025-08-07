@@ -7,6 +7,37 @@ let boardSquares = [];
 
 let selectedSquare = null;
 
+function setTime(){
+    document.getElementById("whiteMin").innerHTML = document.getElementById('setMin').value;
+    document.getElementById("blackMin").innerHTML = document.getElementById('setMin').value;
+    document.getElementById("blackSec").innerHTML = "00";
+    document.getElementById("whiteSec").innerHTML = "00";
+    document.getElementById("blackMil").innerHTML = "00";
+    document.getElementById("whiteMil").innerHTML = "00";
+}
+
+function setClrT() {
+    let wMil = document.getElementById(currentPlayer.color+"Mil").innerHTML;
+    let wSec = document.getElementById(currentPlayer.color+"Sec").innerHTML;
+    wMil -= 1;
+    if(wMil < 0){
+        wSec -= 1;
+        wMil += 100;
+    }
+    if(wSec < 0){
+        if(document.getElementById(currentPlayer.color+"Min").innerHTML==0){
+            showError("No time for"+ currentPlayer.color);
+        }
+        document.getElementById(currentPlayer.color+"Min").innerHTML = document.getElementById(currentPlayer.color+"Min").innerHTML - 1;
+        wSec = wSec + 60;
+    }
+    document.getElementById(currentPlayer.color+"Sec").innerHTML = String(wSec).padStart(2, '0');
+    document.getElementById(currentPlayer.color+"Mil").innerHTML = String(wMil).padStart(2, '0');
+}
+
+// Call the function every 10 milliseconds 
+const intervalId = setInterval(setClrT, 10);
+
 let Player = function(color){
     this.checked = false;
 	this.color = color;
@@ -43,7 +74,7 @@ SquareObject.prototype.unsetPiece = function(){
 	this.piece = null;
 	this.update();
 };
-
+//
 SquareObject.prototype.update = function(){
 	this.element.className = "square " + this.color + " " + (this.selected ? "selected" : "") + " " + (this.piece === null ? "empty" : this.piece.color + "-" + this.piece.type);
 };
@@ -495,7 +526,7 @@ Pawn.prototype.isValidMove = function(toSquare,n=1){
 }
 
 let setup = function(){
-	let boardContainer = document.getElementById("board");
+	let boardContainer = document.getElementById("boardc");
 	for(let i = 1; i <= 8; i++){
 		for (let j = 1; j <= 8; j++){
 			let squareElement = document.createElement("div");
@@ -508,6 +539,7 @@ let setup = function(){
 			boardSquares.push(square);
 			boardContainer.appendChild(squareElement);
 		}
+		document.createElement("br")
 	}
     white.king = new King(5, 8, "white");
     black.king = new King(5, 1, "black");
@@ -549,6 +581,55 @@ let setup = function(){
 	}
 };
 
+let newsetup = function(){
+
+	for(let i = 1; i <= 8; i++){
+		for (let j = 1; j <= 8; j++){
+	        pieces.push(new Pawn(i,j,"white"));
+		}
+	}
+
+    white.king = new King(5, 8, "white");
+    black.king = new King(5, 1, "black");
+    pieces.push(white.king);
+    pieces.push(black.king);
+    
+	pieces.push(new Castle(1, 1, "black"));
+	pieces.push(new Knight(2, 1, "black"));
+	pieces.push(new Bishop(3, 1, "black"));
+	pieces.push(new Queen(4, 1, "black"));
+	pieces.push(new Bishop(6, 1, "black"));
+	pieces.push(new Knight(7, 1, "black"));
+	pieces.push(new Castle(8, 1, "black"));
+	pieces.push(new Pawn(1, 2, "black"));
+	pieces.push(new Pawn(2, 2, "black"));
+	pieces.push(new Pawn(3, 2, "black"));
+	pieces.push(new Pawn(4, 2, "black"));
+	pieces.push(new Pawn(5, 2, "black"));
+	pieces.push(new Pawn(6, 2, "black"));
+	pieces.push(new Pawn(7, 2, "black"));
+	pieces.push(new Pawn(8, 2, "black"));
+	pieces.push(new Pawn(1, 7, "white"));
+	pieces.push(new Pawn(2, 7, "white"));
+	pieces.push(new Pawn(3, 7, "white"));
+	pieces.push(new Pawn(4, 7, "white"));
+	pieces.push(new Pawn(5, 7, "white"));
+	pieces.push(new Pawn(6, 7, "white"));
+	pieces.push(new Pawn(7, 7, "white"));
+	pieces.push(new Pawn(8, 7, "white"));
+	pieces.push(new Castle(1, 8, "white"));
+	pieces.push(new Knight(2, 8, "white"));
+	pieces.push(new Bishop(3, 8, "white"));
+	pieces.push(new Queen(4, 8, "white"));
+	pieces.push(new Bishop(6, 8, "white"));
+	pieces.push(new Knight(7, 8, "white"));
+	pieces.push(new Castle(8, 8, "white"));
+	for(let i = 0; i < pieces.length; i++){
+		getSquare(pieces[i].x, pieces[i].y).setPiece(pieces[i]);
+	}
+    closeEnd();
+};
+
 let showError = function(message){
 	document.getElementById("errorText").innerHTML = message;
 	document.getElementById("errorMessage").className = "overlay show";
@@ -561,6 +642,10 @@ let closeError = function(){
 let showEnd = function(message){
 	document.getElementById("endText").innerHTML = message;
 	document.getElementById("endMessage").className = "overlay show";
+}
+
+let closeEnd = function(){
+	document.getElementById("endMessage").className = "overlay";
 }
 
 let getSquare = function(x, y){
@@ -665,7 +750,7 @@ let move = function(start, end){
             if(kingExposed(black.king)){
                 black.checked=true;
                 if(isCheckmate(black.king)){
-                    showError("Checkmate");
+                    showError("CHECK");
                     return;
                 }
                 showError("Check")
@@ -683,7 +768,7 @@ let move = function(start, end){
             if(kingExposed(white.king)){
                 white.checked=true;
                 if(isCheckmate(white.king)){
-                    showError("Checkmate");
+                    showError("CHECK");
                     return;
                 }
                 showError("Check")
@@ -1088,9 +1173,11 @@ let nextTurn = function(){
     turn++;
 	if(currentPlayer.color == "white"){
 		currentPlayer = black;
-        document.getElementById("turnInfo").innerHTML = "Player's turn: <b>Black</b>";
-	}else{
+        document.getElementById("blackTime").style.backgroundColor = "black";
+        document.getElementById("whiteTime").style.backgroundColor = "darkgrey";
+	} else{
 		currentPlayer = white;
-        document.getElementById("turnInfo").innerHTML = "Player's turn: <b>White</b>";
+        document.getElementById("blackTime").style.backgroundColor = "darkgrey";
+        document.getElementById("whiteTime").style.backgroundColor = "white";
 	}
 }
